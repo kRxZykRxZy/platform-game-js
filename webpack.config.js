@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   entry: './src/index.js',
@@ -16,33 +17,19 @@ module.exports = {
     rules: [
       {
         test: /\.(png|jpe?g|gif|mp3)$/i,
-        use: [
-          {
-            loader: 'file-loader',
-          },
-        ],
+        use: [{ loader: 'file-loader' }],
       },
       {
         test: /\.js$/,
         include: path.resolve(__dirname, 'src/'),
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/env'],
-          },
-        },
+        use: { loader: 'babel-loader', options: { presets: ['@babel/env'] } },
       },
-      {
-        test: /\.html$/i,
-        loader: 'html-loader',
-      },
-      {
-        test: /\.css$/i,
-        use: ['style-loader', 'css-loader'],
-      },
+      { test: /\.html$/i, loader: 'html-loader' },
+      { test: /\.css$/i, use: ['style-loader', 'css-loader'] },
     ],
   },
   plugins: [
+    new CopyWebpackPlugin({ patterns: [{ from: 'src/index.html', to: 'index.html' }] }),
     new webpack.DefinePlugin({
       'typeof CANVAS_RENDERER': JSON.stringify(true),
       'typeof WEBGL_RENDERER': JSON.stringify(true),
