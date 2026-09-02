@@ -4,9 +4,9 @@ const mobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mob
 
 export default {
   type: Phaser.AUTO,
-  width: window.innerWidth,
-  height: window.innerHeight,
-  parent: 'phaser-example',
+  width: 800,
+  height: 600,
+  parent: 'game-container',
   dom: { createContainer: true },
   backgroundColor: '#0b1020',
   render: {
@@ -22,8 +22,6 @@ export default {
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: '100%',
-    height: '100%',
   },
   physics: {
     default: 'arcade',
