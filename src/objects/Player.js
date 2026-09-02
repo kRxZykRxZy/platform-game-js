@@ -44,11 +44,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   update(time) {
     if (!this.active) return;
-    const left = this.cursors.left.isDown || this.keys.left.isDown;
-    const right = this.cursors.right.isDown || this.keys.right.isDown;
-    const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keys.up) || Phaser.Input.Keyboard.JustDown(this.keys.jump);
-    const attackPressed = Phaser.Input.Keyboard.JustDown(this.keys.attack);
-    const dashPressed = Phaser.Input.Keyboard.JustDown(this.keys.dash) || Phaser.Input.Keyboard.JustDown(this.keys.shift);
+    const mobile = this.scene.mobile;
+    const left = this.cursors.left.isDown || this.keys.left.isDown || (mobile && mobile.state.left);
+    const right = this.cursors.right.isDown || this.keys.right.isDown || (mobile && mobile.state.right);
+    const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keys.up) || Phaser.Input.Keyboard.JustDown(this.keys.jump) || (mobile && mobile.consume('jump'));
+    const attackPressed = Phaser.Input.Keyboard.JustDown(this.keys.attack) || (mobile && mobile.consume('attack'));
+    const dashPressed = Phaser.Input.Keyboard.JustDown(this.keys.dash) || Phaser.Input.Keyboard.JustDown(this.keys.shift) || (mobile && mobile.consume('dash'));
     const grounded = this.body.blocked.down || this.body.touching.down;
     if (grounded) { this.jumpsUsed = 0; this.lastGrounded = time; }
     if (dashPressed && time >= this.lastDash + this.dashCooldown) this.dash(time);
@@ -99,13 +100,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   addXp(amount) {
     this.xp += amount;
-    const required = this.level * 100;
+    let required = this.level * 100;
     while (this.xp >= required) {
       this.xp -= required;
       this.level += 1;
       this.maxHealth += 10;
       this.health = this.maxHealth;
       this.scene.showToast(`LEVEL UP! ${this.level}`);
+      required = this.level * 100;
     }
   }
 }
