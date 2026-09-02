@@ -5,8 +5,12 @@ export default class MobileControls {
     this.scene = scene;
     this.state = { left: false, right: false, jump: false, attack: false, dash: false };
     this.buttons = [];
+    this.refs = {};
     this.enabled = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || scene.scale.width < 700;
-    if (this.enabled) this.create();
+    if (this.enabled) {
+      this.create();
+      this.scene.scale.on('resize', this.resize, this);
+    }
   }
 
   createButton(x, y, label, key, size = 64) {
@@ -21,16 +25,39 @@ export default class MobileControls {
     button.on('pointerout', release);
     button.on('pointercancel', release);
     this.buttons.push(button, text);
+    this.refs[key] = { button, text, size };
   }
 
   create() {
     const h = this.scene.scale.height;
     const w = this.scene.scale.width;
-    this.createButton(72, h - 78, '◀', 'left', 68);
-    this.createButton(152, h - 78, '▶', 'right', 68);
-    this.createButton(w - 170, h - 88, 'JUMP', 'jump', 78);
-    this.createButton(w - 78, h - 145, 'ATK', 'attack', 64);
-    this.createButton(w - 78, h - 65, 'DASH', 'dash', 64);
+    this.createButton(72, h - 72, '◀', 'left', 64);
+    this.createButton(148, h - 72, '▶', 'right', 64);
+    this.createButton(w - 165, h - 82, 'JUMP', 'jump', 72);
+    this.createButton(w - 76, h - 138, 'ATK', 'attack', 60);
+    this.createButton(w - 76, h - 64, 'DASH', 'dash', 60);
+  }
+
+  resize(gameSize) {
+    if (!this.enabled) return;
+    const w = gameSize.width;
+    const h = gameSize.height;
+    const bottom = Math.max(58, Math.min(86, h * 0.14));
+    const leftY = h - bottom;
+    const positions = {
+      left: [72, leftY],
+      right: [148, leftY],
+      jump: [w - 165, h - bottom - 10],
+      attack: [w - 76, h - bottom - 66],
+      dash: [w - 76, h - bottom + 8],
+    };
+    Object.keys(positions).forEach(key => {
+      const ref = this.refs[key];
+      if (!ref) return;
+      const [x, y] = positions[key];
+      ref.button.setPosition(x, y);
+      ref.text.setPosition(x, y);
+    });
   }
 
   consume(key) {
@@ -40,7 +67,9 @@ export default class MobileControls {
   }
 
   destroy() {
+    if (this.enabled) this.scene.scale.off('resize', this.resize, this);
     this.buttons.forEach(item => item.destroy());
     this.buttons = [];
+    this.refs = {};
   }
 }
