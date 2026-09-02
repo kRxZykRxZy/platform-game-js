@@ -66,10 +66,12 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createBackground() {
-    this.add.tileSprite(0, 0, this.worldWidth, this.scale.height, 'jungleG').setOrigin(0).setScrollFactor(0.05).setDepth(-3);
-    this.add.tileSprite(0, 90, this.worldWidth, 250, 'jungleF').setOrigin(0).setScrollFactor(0.12).setAlpha(0.9).setDepth(-2);
-    this.add.tileSprite(0, 190, this.worldWidth, 400, 'jungleE').setOrigin(0).setScrollFactor(0.2).setAlpha(0.92).setDepth(-1);
-    this.add.rectangle(0, 0, this.worldWidth, this.scale.height, 0x86d8ff, 0.22).setOrigin(0).setScrollFactor(0).setDepth(-4);
+    this.cameras.main.setBackgroundColor(0x86d8ff);
+    for (let x = 0; x < this.worldWidth; x += 1600) {
+      this.add.tileSprite(x, 0, 1600, this.scale.height, 'jungleG').setOrigin(0).setScrollFactor(0.05).setDepth(-3);
+      this.add.tileSprite(x, 90, 1600, 250, 'jungleF').setOrigin(0).setScrollFactor(0.12).setAlpha(0.9).setDepth(-2);
+      this.add.tileSprite(x, 190, 1600, 400, 'jungleE').setOrigin(0).setScrollFactor(0.2).setAlpha(0.92).setDepth(-1);
+    }
   }
 
   createHud() {
