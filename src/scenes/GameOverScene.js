@@ -1,110 +1,67 @@
 import 'phaser';
-import 'regenerator-runtime';
-import Button from '../objects/Button';
+import CrazyGames from '../modules/CrazyGames';
 
 export default class GameOverScene extends Phaser.Scene {
-  constructor() {
-    super('Over');
-  }
-
-  preload() {
-  }
+  constructor() { super('Over'); }
 
   create() {
     this.model = this.sys.game.globals.model;
-    this.scoreBoard = this.sys.game.globals.sB;
-    const score = this.model.score;
-    const width = this.cameras.main.width;
-    const height = this.cameras.main.height;
-    this.gameOverText = this.add.text(0, 0, 'Game Over', { fontSize: '52px', fill: '#f00' });
-    this.finalScoreTitle = this.add.text(0, 0, 'Time survived:', { fontSize: '34px', fill: '#fff' });
-    this.finalScore = this.add.text(0, 0, `${score}`, { fontSize: '30px', fill: '#fff' });
-    this.zone = this.add.zone(width / 2, height / 2, width, height);
-    this.homeButton = new Button(this, 150, 500, 'blueButton1', 'blueButton2', 'Home', 'Title');
-    this.restartButton = new Button(this, 650, 500, 'blueButton1', 'blueButton2', 'Restart', 'Game');
-    if (score.split(':')[1] > 0 && localStorage.getItem('scoreSaved') === 'false') {
-      const response = this.scoreBoard.newScore();
-      response.then(() => {
-        this.getScoreBoardData();
-      });
-    } else {
-      this.getScoreBoardData();
-    }
-    Phaser.Display.Align.In.Center(
-      this.gameOverText,
-      this.zone,
-    );
-    Phaser.Display.Align.In.Center(
-      this.finalScoreTitle,
-      this.zone,
-    );
+    CrazyGames.gameplayStop();
+    const w = this.scale.width;
+    const h = this.scale.height;
+    this.add.rectangle(0, 0, w, h, 0x0b1020).setOrigin(0);
+    this.add.text(w / 2, 70, 'RUN OVER', { fontSize: '48px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+    this.add.text(w / 2, 135, `Survived ${this.model.score}`, { fontSize: '24px', color: '#cbd5e1' }).setOrigin(0.5);
+    this.add.text(w / 2, 175, `Best distance: ${Math.floor(this.model.bestDistance / 10)}m`, { fontSize: '18px', color: '#93c5fd' }).setOrigin(0.5);
 
-    Phaser.Display.Align.In.Center(
-      this.finalScore,
-      this.zone,
-    );
-    this.gameOverText.setY(30);
-    this.finalScoreTitle.setY(110);
-    this.finalScore.setY(145);
+    this.makeButton(w / 2, 270, '▶ CONTINUE FROM CHECKPOINT', () => this.restart(), 0x2563eb, 310);
+    this.makeButton(w / 2, 340, '🎬 WATCH AD • REVIVE', () => this.revive(), 0x16a34a, 310);
+    this.makeButton(w / 2, 410, '🎬 WATCH AD • BONUS 2× COINS', () => this.doubleCoins(), 0x7c3aed, 310);
+    this.makeButton(w / 2, 480, 'UPGRADE LAB', () => this.scene.start('Upgrades'), 0x475569, 220);
+    this.makeButton(w / 2, 545, 'MAIN MENU', () => this.scene.start('Title'), 0x334155, 220);
+    this.add.text(w / 2, h - 28, 'Ads are optional. You can always continue without watching.', { fontSize: '13px', color: '#94a3b8' }).setOrigin(0.5);
   }
 
-  getScoreBoardData() {
-    const sb = this.scoreBoard.getScores();
-    sb.then(data => {
-      const scores = data.result;
-      scores.sort((a, b) => {
-        let comparison = 0;
-        if (a.score > b.score) {
-          comparison = -1;
-        } else if (a.score < b.score) {
-          comparison = 1;
-        }
-        return comparison;
-      });
-      const tempTable = this.createList(scores);
-      this.form = this.add.dom(400, 400, tempTable);
+  makeButton(x, y, label, callback, color, width) {
+    const bg = this.add.rectangle(x, y, width, 54, color, 1).setInteractive({ useHandCursor: true });
+    this.add.text(x, y, label, { fontSize: '17px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+    bg.on('pointerdown', callback);
+    bg.on('pointerover', () => bg.setAlpha(0.82));
+    bg.on('pointerout', () => bg.setAlpha(1));
+    return bg;
+  }
+
+  restart() {
+    this.scene.start('Game');
+    CrazyGames.gameplayStart();
+  }
+
+  revive() {
+    this.lockButtons();
+    const requested = CrazyGames.requestAd('rewarded', () => {
+      this.model.resumeX = Math.max(0, this.model.resumeX || 0);
+      this.restart();
     });
+    if (!requested) this.unlockButtons();
   }
 
-  createList(data) {
-    const listTable = document.createElement('table');
-    listTable.id = 'leaderboad';
-    listTable.style.color = '#000 ';
-    listTable.style.maxHeight = '300px';
-    listTable.style.width = '240px';
-    listTable.style.overflowX = 'scroll';
-    listTable.style.borderCollapse = 'collapse';
-    listTable.style.background = '#fff';
-    const firstTr = document.createElement('tr');
-    const nameTitle = document.createElement('th');
-    nameTitle.style.paddingRight = '10px';
-    nameTitle.style.width = '50%';
-    const scoreTitle = document.createElement('th');
-    scoreTitle.style.width = '50%';
-    nameTitle.innerHTML = 'Name';
-    scoreTitle.innerHTML = 'Score';
-    firstTr.appendChild(nameTitle);
-    firstTr.appendChild(scoreTitle);
-    listTable.appendChild(firstTr);
-    for (let i = 0; i < data.length; i += 1) {
-      const tempTr = document.createElement('tr');
-      if (i % 2 === 0) {
-        tempTr.style.background = '#dddddd';
-      }
-      const firstTd = document.createElement('td');
-      firstTd.style.paddingRight = '10px';
-      firstTd.style.textAlign = 'center';
-      firstTd.style.width = '50%';
-      const secondTd = document.createElement('td');
-      secondTd.style.width = '50%';
-      secondTd.style.textAlign = 'center';
-      firstTd.innerHTML = data[i].user;
-      secondTd.innerHTML = data[i].score;
-      tempTr.appendChild(firstTd);
-      tempTr.appendChild(secondTd);
-      listTable.appendChild(tempTr);
-    }
-    this.model.leaderboard = listTable;
-    return listTable;
+  doubleCoins() {
+    this.lockButtons();
+    const requested = CrazyGames.requestAd('rewarded', () => {
+      this.model.coins += 250;
+      this.model.saveProgress();
+      this.add.text(this.scale.width / 2, 225, '+250 COINS!', { fontSize: '24px', color: '#ffd166', fontStyle: 'bold' }).setOrigin(0.5);
+      this.unlockButtons();
+    });
+    if (!requested) this.unlockButtons();
+  }
+
+  lockButtons() {
+    this.input.enabled = false;
+    this.add.text(this.scale.width / 2, 225, 'Loading ad…', { fontSize: '20px', color: '#fff' }).setOrigin(0.5);
+  }
+
+  unlockButtons() {
+    this.input.enabled = true;
   }
 }
